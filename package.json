@@ -1,0 +1,41 @@
+{
+  "name": "fasttoken",
+  "version": "1.0.0",
+  "main": "truffle-config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "compile": "truffle compile",
+    "build": "truffle compile",
+    "version": "truffle version",
+    "migrate": "truffle migrate",
+    "deploy": "node bin/deploy.js",
+    "serve": "truffle serve",
+    "lint": "solium -d contracts/ --fix",
+    "ganache": "ganache-cli"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "openzeppelin-solidity": "2.1.1",
+    "truffle": "^5.0.2",
+    "truffle-assertions": "^0.7.1",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.2",
+    "web3": "^1.0.0-beta.36"
+  },
+  "description": "npm install npm run migrate npm run test",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "devDependencies": {
+    "bignumber.js": "^7.2.1",
+    "ethlint": "^1.2.0",
+    "ganache-cli": "^6.1.8",
+    "solidity-docgen": "^0.1.0"
+  }
+}
