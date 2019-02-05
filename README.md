@@ -1,4 +1,4 @@
-# Serve-core
+# Fasttoken
 Ethereum contracts for Fasttoken
 
 ### Setup:
