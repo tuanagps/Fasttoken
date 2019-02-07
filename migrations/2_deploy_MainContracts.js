@@ -9,6 +9,7 @@ var fs = require('fs');
 
 module.exports = async (deployer, network) => {
 
+        return;
         try {
                 let now = Date.now();
                 let fromNow = 3600 * 1000; // Start distribution in 1 hour
@@ -29,7 +30,7 @@ module.exports = async (deployer, network) => {
                 var addresses = { Distribution: Distribution.address,
                                 Fasttoken: token,
                                 Casino: Casino.address };
-                fs.writeFile('addresses/' + network + '.json', JSON.stringify(addresses, null, 2) , 'utf-8');
+                fs.writeFileSync('addresses/' + network + '.json', JSON.stringify(addresses, null, 2) , 'utf-8');
 
         } catch (err) {
                 console.log(err);

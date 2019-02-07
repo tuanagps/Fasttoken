@@ -17,24 +17,40 @@ exports.init = async function (network) {
         var gasPrice = truffle.networks[network].gasPrice;
         web3.setProvider(new web3.providers.HttpProvider('http://' + host + ':' + port.toString()));
         transactionOptions = { from: from, gas: gas, gasPrice: gasPrice };
-        fs.readdir('slots/', (err, files) => {
-                files.forEach(file => {
-                        initSlot(network, file.split('.').slice(0, -1).join('.'));
-                });
+        await initSlot(network, 'Ogwil');
+        return;
+        fs.readdir('slots/', async (err, files) => {
+                asyncForEach(files, async (file) => {
+                        var i = file.lastIndexOf('.');
+                        var ext = (i < 0) ? '' : file.substr(i);
+                        if (ext === '.json'/* && file === 'FlamingFruits.json'*/) {
+                                await initSlot(network, file.split('.').slice(0, -1).join('.'));
+                        }
+                })
         })
+}
+
+async function asyncForEach(array, callback) {
+
+        for (let index = 0; index < array.length; index++) {
+                await callback(array[index], index, array);
+        }
 }
 
 async function initSlot(network, name) {
 
-        slot = JSON.parse(fs.readFileSync("./slots/" + name + ".json"));
+        console.log(name);
+        //slot = JSON.parse(fs.readFileSync("./slots/" + name + ".json"));
 
         var addresses = require('../addresses/' + network + '.json');
         var dr = getContract(name, addresses[name]);
 
-        await addReels(dr);
-        await addWins(dr);
-        await addLines(dr);
+        //await addReels(dr);
+        //await addFreespinReels(dr);
+        //await addWins(dr);
+        //await addLines(dr);
         await addToCasino(network, dr, name);
+        console.log('---------------------------------------------------------------------------------------');
 }
 
 function getContract(name, address) {
@@ -64,7 +80,40 @@ async function addReels(dr) {
         for (; i < slot.reels.length; ++i) {
                 let tr = await dr.methods.addReel(slot.reels[i]).send(transactionOptions);
                 console.log('hash - ', tr.transactionHash);
+                console.log(i);
                 console.log('reel ' + i.toString() + '- ', (await dr.methods.getReelArray(i).call()).join(' '));
+        }
+}
+
+async function addFreespinReels(dr) {
+
+        console.log("Adding FreeSpin Reels ...");
+        let l;
+        try {
+                l = await dr.methods.getReelsFreespinLength().call();
+        } catch (err) {
+                console.log("There is no FreeSpins ...");
+                return;
+        }
+        console.log(l);
+        if (l > slot.reelsFreespin.length) {
+                throw new Error('Reels Freespin length is invalid in contract - ' + dr._address);
+        }
+        for (var i = 0; i < l; ++i) {
+                let r = await dr.methods.getReelFreespinArray(i).call();
+                r.forEach((e1, index) => {
+                        if (+e1 !== +slot.reelsFreespin[i][index]) {
+                                throw new Error('Reel Freespin ' + i.toString() + ' is invalid in contract - ' + dr._address);
+                        }
+                });
+        }
+        if (i === slot.reelsFreespin.length) {
+                console.log('Nothing to be added');
+        }
+        for (; i < slot.reelsFreespin.length; ++i) {
+                let tr = await dr.methods.addFreespinReel(slot.reelsFreespin[i]).send(transactionOptions);
+                console.log('hash - ', tr.transactionHash);
+                console.log('reel ' + i.toString() + '- ', (await dr.methods.getReelFreespinArray(i).call()).join(' '));
         }
 }
 

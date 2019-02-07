@@ -1,5 +1,5 @@
 
-var FlamingFruits = artifacts.require("FlamingFruits");
+var FashionShow = artifacts.require("FashionShow");
 
 var fs = require('fs');
 
@@ -7,7 +7,7 @@ var fs = require('fs');
 function writeIntoFile(network) {
 
         var addresses = JSON.parse(fs.readFileSync('addresses/' + network + '.json', 'utf8'));
-        addresses.FlamingFruits = FlamingFruits.address;
+        addresses.FashionShow = FashionShow.address;
         fs.writeFileSync('addresses/' + network + '.json', JSON.stringify(addresses, null, 2) , 'utf-8');
 }
 
@@ -15,9 +15,9 @@ module.exports = async (deployer, network) => {
 
         return;
         try {
-                await deployer.deploy(FlamingFruits);
+                await deployer.deploy(FashionShow);
                 writeIntoFile(network);
-                await FlamingFruits.at(FlamingFruits.address);
+                await FashionShow.at(FashionShow.address);
         } catch (err) {
                 console.log(err);
         }

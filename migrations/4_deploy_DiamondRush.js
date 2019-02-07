@@ -8,11 +8,12 @@ function writeIntoFile(network) {
 
         var addresses = JSON.parse(fs.readFileSync('addresses/' + network + '.json', 'utf8'));
         addresses.DiamondRush = DiamondRush.address;
-        fs.writeFile('addresses/' + network + '.json', JSON.stringify(addresses, null, 2) , 'utf-8');
+        fs.writeFileSync('addresses/' + network + '.json', JSON.stringify(addresses, null, 2) , 'utf-8');
 }
 
 module.exports = async (deployer, network) => {
 
+        return;
         try {
                 await deployer.deploy(DiamondRush);
                 writeIntoFile(network);
