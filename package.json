@@ -13,7 +13,6 @@
     "version": "truffle version",
     "migrate": "truffle migrate",
     "deploy": "node bin/deploy.js",
-    "serve": "truffle serve",
     "lint": "solium -d contracts/ --fix",
     "ganache": "ganache-cli"
   },
