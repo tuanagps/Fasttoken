@@ -16,7 +16,7 @@ import './Casino.sol';
 contract Channel { 
    
         Fasttoken public token;
-        Casino public  casino;
+        Casino public casino;
         address public player;
         
         /// being called by casino contract to instantly withdraw FTN from channel to user
@@ -48,4 +48,3 @@ contract Channel {
         }
         
 }
-

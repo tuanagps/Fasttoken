@@ -6,7 +6,7 @@ var fs = require('fs');
 
 function writeIntoFile(network) {
 
-        var addresses = JSON.parse(fs.readFileSync('addresses/' + network + '.json', 'utf8'));
+        let addresses = JSON.parse(fs.readFileSync('addresses/' + network + '.json', 'utf8'));
         addresses.Ogwil = Ogwil.address;
         fs.writeFileSync('addresses/' + network + '.json', JSON.stringify(addresses, null, 2) , 'utf-8');
 }

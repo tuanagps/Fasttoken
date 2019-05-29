@@ -81,27 +81,84 @@ contract BaseSlot is BaseGame {
                                                         view
                                                         returns (uint256[] memory) {
 
-              //  require(rand1.length == reels.length + 1, 'Error: rand1 length is not correct'); //TODO rethink this
                 require(rand1.length == rand2.length, 'Error: rand2 length is not correct');
+                require(rand1.length == getRandLength(1), 'Error: rand1 length is not correct'); 
                 uint256[] memory rand = new uint256[](rand1.length - 1);
-                for (uint256 i = 0; i < rand1.length - 2; i++) {
+                for (uint256 i = 0; i < rand1.length - 1; i++) {
                         rand[i] = (rand1[i] + rand2[i]) % reels[i].length;
                 }
-                rand[rand.length - 1] = (rand1[rand.length - 1] + rand2[rand.length - 1]) % reels.length;
+                
 
                 return rand;
         }
         
         function mergeDoublingRands(uint256[] memory rand1, uint256[] memory rand2) 
-                                                        public
-                                                        pure
-                                                        returns (uint256) {
-
-                require(rand1.length == 2, 'Error: rand1 length should be 2');
-                require(rand2.length == 2, 'Error: rand2 length should be 2');
-
-                return (rand1[0] + rand2[0]) % 2;
+                                                                            view
+                                                                            public
+                    returns (uint256[] memory) {
+                                                            
+                require(rand2.length == rand1.length, 'Error: rand2 length should be 2');
+                require(rand1.length == getRandLength(2), 'Error: rand1 length should be 2');
+                uint256[] memory rand = new uint256[](1);
+                rand[0] = (rand1[0] + rand2[0]) % 2;
+                return rand;
         }
+        
+        function getRandLength(uint256 stepType)
+                internal
+                view
+                returns (uint256 randLength) {
+                    if(1 == stepType) {
+                        return reels.length + 1;
+                    }
+                    else if(2 == stepType) {
+                        return 2;
+                    }
+                    require(false, "Error: Wrong game type");
+                }
+        function getRandBoundaries(uint256[] calldata , uint256[] calldata action)
+                external
+                view
+                returns (uint256[] memory randBoundaries) {
+
+                    if (1 == action[1]) {
+                        randBoundaries = new uint256[](reels.length);
+                        
+                        for (uint256 i = 0; i < reels.length; i++) {
+                            randBoundaries[i] = reels[i].length;
+                        }
+                        
+                    }
+                    else if (2 == action[1]) {
+                        
+                        randBoundaries = new uint256[](1);
+                        randBoundaries[0] = 2;
+          
+                    }
+                    else {
+                        require(false, "Error: Wrong game type");
+                    }
+                    
+                    return randBoundaries;
+                }
+                
+         function mergeRands(
+                uint256[] memory ,
+                uint256[] memory action,
+                uint256[] memory rand1,
+                uint256[] memory rand2)
+                public
+                view
+                returns (uint256[] memory rand) {
+                   
+                    if (1 == action[1]) {
+                        return mergeSpinRands(rand1, rand2);
+                    }
+                    else if (2 == action[1]) {
+                        return mergeDoublingRands(rand1, rand2);
+                    }
+                    require(false, "Error: Wrong game type");
+                }
         
         function getImageLine(uint256[] memory rand, uint256 lineNumber)
                                         public

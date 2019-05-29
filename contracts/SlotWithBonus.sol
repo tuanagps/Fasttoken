@@ -6,9 +6,9 @@ import './BaseSlot.sol';
 
 
 /**
- * @title All classic slots like this can be derived from here
+ * @title All slots with bonus game like this can be derived from here
  */
-contract ClassicSlot is BaseSlot {
+contract SlotWithBonus is BaseSlot {
         
 
         /**
@@ -41,6 +41,20 @@ contract ClassicSlot is BaseSlot {
                 public
                 pure
                 returns (uint256);
+        
+         /**
+         * @notice Gets win for given spin
+         * @dev This order of arguments saves from stack too deep problem.
+         *
+         * @param choice of the game
+         * @param rand Spin's random values'
+         * @return Win if any Number of free spins and multipliers
+         * 
+         */
+        function getBonusGameResult(uint256 choice, uint256[] memory rand) 
+                public
+                view
+                returns (uint256[] memory);
 
         /**
          *
@@ -48,7 +62,7 @@ contract ClassicSlot is BaseSlot {
          *
          * @param state is an array and represents game state
          *              state[0] - 0->unInit, 1->sha1, 2->r2, 3->r1
-         *              state[1] - 0->unInit, 1->normal, 2->doubling
+         *              state[1] - 0->unInit, 1->normal, 2->doubling, 3->bonus
          *              state[2] - bet
          *              state[3] - line
          *              state[4] - choice
@@ -80,16 +94,14 @@ contract ClassicSlot is BaseSlot {
                 }
                 
                 require (4 > state[0], 'Error: state[0] invalid value');
-                require (3 > state[1], 'Error: state[1] invalid value');
-                require (3 > state[4], 'Error: state[4] invalid value');
+                require (4 > state[1], 'Error: state[1] invalid value');
 
                 require (5 == action.length, 'Error: action invalid argument count');
                 require (0 < action[0], 'Error: action[0] invalid value');
                 require (0 < action[1], 'Error: action[1] invalid value');
                 require (4 > action[0], 'Error: action[0] invalid value');
-                require (3 > action[1], 'Error: action[1] invalid value');
+                require (4 > action[1], 'Error: action[1] invalid value');
                 /// TODO Check maximum value of bet
-                require (3 > action[4], 'Error: action[4] invalid value');
 
                 if (1 == action[0]) { //player sends sha1
                         return startAction(state, action);
@@ -152,6 +164,14 @@ contract ClassicSlot is BaseSlot {
                         balanceChange = int(state[6]);
                         state[4] = action[4];
                 }
+                else if (3 == state[1]) { // bonus game
+
+                        require(0 == action[2], 'Error: action[2] should be 0');
+                        require(0 != action[4], 'Error: action[4] should not be 0');
+
+                        balanceChange = WIN_MAX;
+                        state[4] = action[4];
+                }
                 state[0] = 1; // Change state to current
                 state[1] = action[1];
 
@@ -179,11 +199,15 @@ contract ClassicSlot is BaseSlot {
                         balanceChange = -WIN_MAX; // TODO calculate WIN_MAX properly based on bet
                 }
                 else if (2 == state[1]) { // doubling
-                        // require(0 == state[2], 'Error: state[2] should be 0');
-                        // require(0 == state[3], 'Error: state[3] should be 0');
+
                         require(0 != state[4], 'Error: state[4] should not be 0');
                         require(0 != state[6], 'Error: state[6] should not be 0');
                         balanceChange = -int256(2 * state[6]);
+                }
+                else if (3 == state[1]) { // bonus game
+                        
+                        require(0 != state[4], 'Error: state[4] should not be 0');
+                        balanceChange = -WIN_MAX;
                 }
                 state[0] = 2; // Change state to current
 
@@ -208,16 +232,25 @@ contract ClassicSlot is BaseSlot {
                 
                 int256 balanceChange = 0;
                 uint256 win = 0;
-                uint256 numberOfFreeSpins = 0;
                 if (1 == state[1]) { // normal
                         require(0 != state[2], 'Error: state[2] should not be 0');
                         require(0 != state[3], 'Error: state[3] should not be 0');
                         require(0 == state[4], 'Error: state[4] should be 0');
                         require(0 == state[6], 'Error: state[6] should be 0');
-                        uint256[] memory temp = getSpinResult(state[2], state[3], mergeRands(state, action, rand1, rand2), state[7]);
-                        win = temp[0];
-                        numberOfFreeSpins = temp[1];
-                        state[7] == numberOfFreeSpins;
+                        uint256[] memory spinRes = getSpinResult(state[2], state[3], mergeRands(state, action, rand1, rand2), state[7]);
+                        win = spinRes[0];
+                        
+                        if (0 < state[7] && 0 != state[5]) {
+                            win = win * state[5];
+                        }
+                        else {
+                            state[5] = 1;
+                        }
+                        state[7] = spinRes[1];
+                        
+                        if (3 == spinRes[2]) {
+                            state[1] = 3;
+                        }
                 }
                 else if (2 == state[1]) { // doubling
 
@@ -225,13 +258,29 @@ contract ClassicSlot is BaseSlot {
                         require(0 != state[6], 'Error: state[6] should not be 0');
                         win = getDoublingResult(state[4], state[6], (mergeRands(state, action, rand1, rand2))[0]);
                 }
+                else if (3 == state[1]) { // bonus game
+
+                        require(0 != state[4], 'Error: state[4] should not be 0');
+                        uint256[] memory bonusRes = getBonusGameResult(state[4], (mergeRands(state, action, rand1, rand2)));
+                        
+                        win = bonusRes[0];
+                        state[7] = bonusRes[1];
+                        state[5] = bonusRes[2];
+                        state[1] = 0;
+                }
                 state[0] = 3; // Change state to current
-                state[1] = 0;
                 state[4] = 0;
                 state[6] = win;
                 
                 balanceChange = int256(win);
                 return(balanceChange, state);                            
         }
+        
+                    
+                
+        function mergeBonusRands(uint256[] memory rand1, uint256[] memory rand2) 
+                                                        public
+                                                        view
+                                                        returns (uint256[] memory);
 }
 

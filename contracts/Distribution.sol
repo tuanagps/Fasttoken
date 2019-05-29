@@ -1,7 +1,7 @@
 
 pragma solidity ^0.5.0;
 
-/// openzeppelin imports
+/// Openzeppelin imports
 import 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
@@ -19,14 +19,14 @@ contract Distribution is Ownable {
 
 
         /// @notice Allocation Types
-        enum AllocationType { Founder, Team, PartnersDistribution, PlayersDistribution, Bankroll, Sell, Marketing }
+        enum AllocationType { Founder, Advisors, PartnersDistribution, PlayersDistribution, Bankroll, Sale, Marketing }
 
 
         /// @notice Token
-        Fasttoken public fst;
+        Fasttoken public ftn;
 
 
-        uint256 private constant DECIMAL_FACTOR = 10**uint256(18);
+        uint256 private constant DECIMAL_FACTOR = 10 ** uint256(18);
 
 
         /// @notice Initial supply
@@ -38,13 +38,13 @@ contract Distribution is Ownable {
 
 
         /// @notice Types of available supplies
-        uint256 public availableFounderSupply                   = 169200000 * DECIMAL_FACTOR;    // 30%
-        uint256 public availableTeamSupply                      = 16920000 * DECIMAL_FACTOR;     // 3%
-        uint256 public availablePartnersDistributionSupply      = 28200000 * DECIMAL_FACTOR;     // 5%
-        uint256 public availablePlayersDistributionSupply       = 141000000 * DECIMAL_FACTOR;    // 25%
-        uint256 public availableBankrollSupply                  = 112800000 * DECIMAL_FACTOR;    // 20%
-        uint256 public availableSellSupply                      = 84600000 * DECIMAL_FACTOR;     // 15%
-        uint256 public availableMarketingSupply                 = 11280000 * DECIMAL_FACTOR;     // 2%
+        uint256 public availableFounderSupply                   = 84600000 * DECIMAL_FACTOR;    // 15%
+        uint256 public availableAdvisorsSupply                  = 16920000 * DECIMAL_FACTOR;    // 3%
+        uint256 public availablePartnersDistributionSupply      = 39480000 * DECIMAL_FACTOR;    // 7%
+        uint256 public availablePlayersDistributionSupply       = 56400000 * DECIMAL_FACTOR;    // 10%
+        uint256 public availableBankrollSupply                  = 56400000 * DECIMAL_FACTOR;    // 10%
+        uint256 public availableSaleSupply                      = 282000000 * DECIMAL_FACTOR;   // 50%
+        uint256 public availableMarketingSupply                 = 28200000 * DECIMAL_FACTOR;    // 5%
 
 
         uint256 public grandTotalClaimed = 0;
@@ -84,23 +84,23 @@ contract Distribution is Ownable {
                 require(s >= now);
                 require(
                         availableTotalSupply == availableFounderSupply.
-                                add(availableTeamSupply).
+                                add(availableAdvisorsSupply).
                                 add(availablePartnersDistributionSupply).
-                                add(availableSellSupply).
+                                add(availableSaleSupply).
                                 add(availablePlayersDistributionSupply).
                                 add(availableMarketingSupply).
                                 add(availableBankrollSupply)
                 );
                 startTime = s;
-                fst = new Fasttoken(address(this));
+                ftn = new Fasttoken(address(this));
         }
 
         /**
          * @notice Allow the owner of the contract to assign a new allocation
          *
          * @param r The recipient of the allocation
-         * @param t The total amount of fst available to the receipient (after vesting)
-         * @param s The fst supply the allocation will be taken from
+         * @param t The total amount of ftn available to the receipient (after vesting)
+         * @param s The ftn supply the allocation will be taken from
          *
          */
         function setAllocation (address r, uint256 t, AllocationType s)
@@ -120,10 +120,10 @@ contract Distribution is Ownable {
                                 t,
                                 0
                         );
-                } else if (AllocationType.Team == s) {
-                        availableTeamSupply = availableTeamSupply.sub(t);
+                } else if (AllocationType.Advisors == s) {
+                        availableAdvisorsSupply = availableAdvisorsSupply.sub(t);
                         allocations[r] = Allocation(
-                                AllocationType.Team,
+                                AllocationType.Advisors,
                                 startTime + 365 days,
                                 startTime + 2 * 365 days,
                                 t,
@@ -147,10 +147,10 @@ contract Distribution is Ownable {
                                 t,
                                 0
                         );
-                } else if (AllocationType.Sell == s) {
-                        availableSellSupply = availableSellSupply.sub(t);
+                } else if (AllocationType.Sale == s) {
+                        availableSaleSupply = availableSaleSupply.sub(t);
                         allocations[r] = Allocation(
-                                AllocationType.Sell,
+                                AllocationType.Sale,
                                 0,
                                 0,
                                 t,
@@ -204,7 +204,7 @@ contract Distribution is Ownable {
                         newAmountClaimed = allocations[r].totalAllocated;
                 }
                 uint256 tokensToTransfer = newAmountClaimed.sub(allocations[r].amountClaimed);
-                require(fst.transfer(r, tokensToTransfer));
+                require(ftn.transfer(r, tokensToTransfer));
                 allocations[r].amountClaimed = newAmountClaimed;
                 grandTotalClaimed = grandTotalClaimed.add(tokensToTransfer);
                 emit TokenClaimed(
@@ -216,7 +216,7 @@ contract Distribution is Ownable {
                 );
         }
 
-        // Returns the amount of fst allocated
+        // Returns the amount of ftn allocated
         function grandTotalAllocated()
                                 public
                                 view
@@ -230,7 +230,7 @@ contract Distribution is Ownable {
                                 public
                                 onlyOwner {
 
-                require(t != address(fst));
+                require(t != address(ftn));
                 ERC20 token = ERC20(t);
                 uint256 balance = token.balanceOf(address(this));
                 require(token.transfer(r, balance));

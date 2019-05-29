@@ -20,28 +20,28 @@ contract('FashionShow', async (accounts) => {
 
         async function addLines() {
 
-                for (var i = 0; i < SLOT.lines.length; ++i) {
+                for (let i = 0; i < SLOT.lines.length; ++i) {
                         await FASIONSHOW.addLine(SLOT.lines[i], { from: OWNER });
                 }
         }
 
         async function addWins() {
 
-                for (var i = 0; i < SLOT.wins.length; ++i) {
+                for (let i = 0; i < SLOT.wins.length; ++i) {
                         await FASIONSHOW.addWin(SLOT.wins[i], { from: OWNER });
                 }
         }
 
         async function addReels() {
 
-                for (var i = 0; i < SLOT.reels.length; ++i) {
+                for (let i = 0; i < SLOT.reels.length; ++i) {
                         await FASIONSHOW.addReel(SLOT.reels[i], { from: OWNER });
                 }
         }
 
         async function addReelsFreespin() {
 
-                for (var i = 0; i < SLOT.reelsFreespin.length; ++i) {
+                for (let i = 0; i < SLOT.reelsFreespin.length; ++i) {
                         await FASIONSHOW.addFreespinReel(SLOT.reelsFreespin[i], { from: OWNER });
                 }
         }
@@ -127,7 +127,7 @@ contract('FashionShow', async (accounts) => {
                 it("1000 spins", async function () {
 
                         let data = JSON.parse(fs.readFileSync('test/out/FashionShow.out'));
-                        for (var i = 0; i < data.length; ++i) {
+                        for (let i = 0; i < data.length; ++i) {
                                 await spin(1, data[i].linesCount,
                                                 data[i].win,
                                                 data[i].freespin,

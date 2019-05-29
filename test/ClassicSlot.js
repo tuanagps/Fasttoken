@@ -127,7 +127,12 @@ contract('ClassicSlot', async (accounts) => {
 
                 it("spin r1", async function () {
 
-                        let rand = [0, 0, 0, 0, 0, 0, 0];
+                        let b = await CLASSICSLOT.getRandBoundaries(result[1], [3, 1, 0, 0, 0]);
+                        let rand = [];
+                        for (let i = 0; i < b.length; ++i) {
+                                rand.push(0);
+                        }
+                        rand.push(0);
                         result = await CLASSICSLOT.doStep(result[1], [3, 1, 0, 0, 0], rand, rand);
                         win = (await CLASSICSLOT.getSpinResult(bet, line, rand.slice(0, rand.length - 1), 0))[0];
                         checkDoStepResult([BigNumber(win), [3, 0, bet, line, 0, 0, BigNumber(win).toNumber(), 0]], result);
@@ -147,8 +152,17 @@ contract('ClassicSlot', async (accounts) => {
 
                 it("doubling r1", async function () {
 
+                        let b = await CLASSICSLOT.getRandBoundaries(result[1], [3, 2, 0, 0, 0]);
+                        let r1 = [];
+                        let r2 = [];
+                        for (var i = 0; i < b.length; ++i) {
+                                r1.push(0);
+                                r2.push(1);
+                        }
+                        r1.push(0);
+                        r2.push(0);
                         let doubleWin = await CLASSICSLOT.getDoublingResult(choice, BigNumber(win), 1);
-                        result = await CLASSICSLOT.doStep(result[1], [3, 2, 0, 0, 0], [1, 0], [0, 0]);
+                        result = await CLASSICSLOT.doStep(result[1], [3, 2, 0, 0, 0], r1, r2);
                         checkDoStepResult([BigNumber(doubleWin), [3, 0, 1, 5, 0, 0, BigNumber(doubleWin), 0]], result);
                 });
 
@@ -166,24 +180,20 @@ contract('ClassicSlot', async (accounts) => {
                 });
         });
 
-        /*
         describe("ClassicSlot Checking mergeSpinRands", async function () {
 
                 it("merges rands correctly", async function () {
 
-                        for (var i = 0; i < 100; ++i) {
+                        for (var i = 0; i < 100; ++i) { 
                                 let r1 = [i, i + 1, i + 2, i + 3, i + 4, i + 5];
                                 let r2 = [i, i, i, i, i, i];
-                                let result = await CLASSICSLOT.mergeSpinRands(r1, r2);
+                                let state = [2, 1, 1, 5, 0, 0, 0, 0];
+                                let action = [3, 1, 0, 0, 0];
+                                assert.equal(r1.length - 1, (await CLASSICSLOT.getRandBoundaries(state, action)).length);
+                                let result = await CLASSICSLOT.mergeRands(state, action, r1, r2);
                                 let golden = await mergeSpinRands(r1, r2);
                                 checkMergeSpinRandResult(golden, result);
                         }
-                });
-
-                it("should fail merging with incorrect values", async function () {
-
-                        await truffleAssert.fails(CLASSICSLOT.mergeSpinRands([0, 0, 0, 0, 0], [0, 0, 0, 0, 0]));
-                        await truffleAssert.fails(CLASSICSLOT.mergeSpinRands([0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]));
                 });
         });
 
@@ -191,24 +201,21 @@ contract('ClassicSlot', async (accounts) => {
 
                 it("merges rands correctly", async function () {
 
-                        let result = await CLASSICSLOT.mergeDoublingRands([0, 0], [0, 0]);
+                        let state = [2, 2, 1, 5, 2, 0, 425, 0];
+                        let action = [3, 2, 0, 0, 0];
+                        assert.equal(1, (await CLASSICSLOT.getRandBoundaries(state, action)).length);
+
+                        let result = await CLASSICSLOT.mergeRands(state, action, [0, 0], [0, 0]);
                         assert.equal(0, BigNumber(result).toNumber());
 
-                        result = await CLASSICSLOT.mergeDoublingRands([0, 0], [1, 0]);
+                        result = await CLASSICSLOT.mergeRands(state, action, [0, 0], [1, 0]);
                         assert.equal(1, BigNumber(result).toNumber());
 
-                        result = await CLASSICSLOT.mergeDoublingRands([1, 0], [0, 0]);
+                        result = await CLASSICSLOT.mergeRands(state, action, [1, 0], [0, 0]);
                         assert.equal(1, BigNumber(result).toNumber());
 
-                        result = await CLASSICSLOT.mergeDoublingRands([1, 0], [1, 0]);
+                        result = await CLASSICSLOT.mergeRands(state, action, [1, 0], [1, 0]);
                         assert.equal(0, BigNumber(result).toNumber());
-                });
-
-                it("should fail merging with incorrect values", async function () {
-
-                        await truffleAssert.fails(CLASSICSLOT.mergeDoublingRands([0], [0]));
-                        await truffleAssert.fails(CLASSICSLOT.mergeDoublingRands([0, 0, 0], [0, 0, 0]));
                 });
         });
-        */
 });

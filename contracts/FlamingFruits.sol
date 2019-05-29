@@ -19,7 +19,8 @@ contract FlamingFruits is ClassicSlot, WithDS {
         /// @notice Constructor
         constructor() public {
 
-                scatSymbol = 11;
+                gameName = "FlamingFruits";
+                scatSymbol = 8;
                 imageSize = 3;
         }
 

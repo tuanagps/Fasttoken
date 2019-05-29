@@ -51,6 +51,7 @@ contract('DiamondRush', async (accounts) => {
                         assert.equal(win, Number(result[0]));
                         //console.log('gas cost -', await DIAMONDRUSH.getSpinResult.estimateGas(bet, line, rand));
                 } catch (err) {
+                        console.log(err);
                         throw new Error(JSON.stringify({error: err,
                                                 number: number,
                                                 cards: cards,

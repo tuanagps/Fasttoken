@@ -17,8 +17,6 @@ exports.init = async function (network) {
         var gasPrice = truffle.networks[network].gasPrice;
         web3.setProvider(new web3.providers.HttpProvider('http://' + host + ':' + port.toString()));
         transactionOptions = { from: from, gas: gas, gasPrice: gasPrice };
-        await initSlot(network, 'Ogwil');
-        return;
         fs.readdir('slots/', async (err, files) => {
                 asyncForEach(files, async (file) => {
                         var i = file.lastIndexOf('.');
@@ -39,16 +37,15 @@ async function asyncForEach(array, callback) {
 
 async function initSlot(network, name) {
 
-        console.log(name);
-        //slot = JSON.parse(fs.readFileSync("./slots/" + name + ".json"));
+        slot = JSON.parse(fs.readFileSync("./slots/" + name + ".json"));
 
         var addresses = require('../addresses/' + network + '.json');
         var dr = getContract(name, addresses[name]);
 
-        //await addReels(dr);
-        //await addFreespinReels(dr);
-        //await addWins(dr);
-        //await addLines(dr);
+        await addReels(dr);
+        await addFreespinReels(dr);
+        await addWins(dr);
+        await addLines(dr);
         await addToCasino(network, dr, name);
         console.log('---------------------------------------------------------------------------------------');
 }
@@ -80,8 +77,7 @@ async function addReels(dr) {
         for (; i < slot.reels.length; ++i) {
                 let tr = await dr.methods.addReel(slot.reels[i]).send(transactionOptions);
                 console.log('hash - ', tr.transactionHash);
-                console.log(i);
-                console.log('reel ' + i.toString() + '- ', (await dr.methods.getReelArray(i).call()).join(' '));
+                console.log('reel ' + i.toString() + ' - ', (await dr.methods.getReelArray(i).call()).join(' '));
         }
 }
 
@@ -95,7 +91,6 @@ async function addFreespinReels(dr) {
                 console.log("There is no FreeSpins ...");
                 return;
         }
-        console.log(l);
         if (l > slot.reelsFreespin.length) {
                 throw new Error('Reels Freespin length is invalid in contract - ' + dr._address);
         }
@@ -113,7 +108,7 @@ async function addFreespinReels(dr) {
         for (; i < slot.reelsFreespin.length; ++i) {
                 let tr = await dr.methods.addFreespinReel(slot.reelsFreespin[i]).send(transactionOptions);
                 console.log('hash - ', tr.transactionHash);
-                console.log('reel ' + i.toString() + '- ', (await dr.methods.getReelFreespinArray(i).call()).join(' '));
+                console.log('reel ' + i.toString() + ' - ', (await dr.methods.getReelFreespinArray(i).call()).join(' '));
         }
 }
 
@@ -139,7 +134,7 @@ async function addWins(dr) {
         for (; i < slot.wins.length; ++i) {
                 let tr = await dr.methods.addWin(slot.wins[i]).send(transactionOptions);
                 console.log('hash - ', tr.transactionHash);
-                console.log('win ' + i.toString() + '- ', await dr.methods.getWinArray(i).call());
+                console.log('win ' + i.toString() + ' - ', await dr.methods.getWinArray(i).call());
         }
 }
 
@@ -165,7 +160,7 @@ async function addLines(dr) {
         for (; i < slot.lines.length; ++i) {
                 let tr = await dr.methods.addLine(slot.lines[i]).send(transactionOptions);
                 console.log('hash - ', tr.transactionHash);
-                console.log('line ' + i.toString() + '- ', await dr.methods.getLineArray(i).call());
+                console.log('line ' + i.toString() + ' - ', await dr.methods.getLineArray(i).call());
         }
 }
 

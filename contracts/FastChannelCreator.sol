@@ -6,7 +6,8 @@ import './FastChannel.sol';
 
 
 contract FastChannelCreator { //Fabric function
-    
+
+        uint16 public constant version = 1;
         function createNew(address casino, address creator, Fasttoken token)
                                                 public
                                                 returns(address) {

@@ -6,7 +6,10 @@ import './BaseSlot.sol';
 
 
 /**
- * @title All classic slots like this can be derived from here
+ * @title All slots that have the following features can be derived from this class
+ * Reeled Freespins - On win game might enter freespin mode where it doesnt pay for spins, with different reels for freespin 
+ * Random WildCards Expanding - randomly chosen column that replace other symbols wildcard
+ * Bouns - symbol for entering bonus game
  */
 contract WithRFRWEB is BaseSlot{
 
@@ -31,7 +34,7 @@ contract WithRFRWEB is BaseSlot{
         function getSpinResult(uint256 bet, uint256 line, uint256[] memory rand, uint256 freespinCount) 
                 public
                 view
-                returns (uint256, uint256) {
+                returns (uint256[] memory retvals) {
 
                 uint256 winRate = 0; // Rate to be calculated
                 uint256 s;
@@ -47,7 +50,8 @@ contract WithRFRWEB is BaseSlot{
                 
                 require(0 != wins.length, 'Error: Uninitialized spins');
                 require(0 != reels.length, 'Error: Uninitialized reels');
-                require(0 != line, 'Error: Uninitialized lines');
+                require(0 != lines.length, 'Error: Uninitialized lines');
+                require(0 != reelsFreespin.length, 'Error: Uninitialized free spins');
                // require(rand.length == reels.length, 'Error: Rand array length should be the same as reels length');
                 require(line <= linesLocal.length, 'Error: line value is bigger than existing lines count');
                 
@@ -61,17 +65,13 @@ contract WithRFRWEB is BaseSlot{
                     image = getFreespinImage(rand);
                     
                     //Extending Wild Cards
-                
+                    // TODO check this out , doesnt look correct , extension should be like on RFWEB
                         for (uint256 j = 0; j < imageSize; j++) {
                                 
                                  image[rand[image.length]][j] = wildCard;
                         
                         }
-                
-                ///////
-                
                 }
-                
                 
                 {
                     
@@ -92,9 +92,6 @@ contract WithRFRWEB is BaseSlot{
                         wcInOrder = j;
                         require(s - 1 < wins.length, 'Error: Current symbol is out of wins borders');
 
-                        if (s == bonusSymbol) {
-                                continue;
-                        }
                         j++;
                         while (j <= n) {
 
@@ -128,13 +125,12 @@ contract WithRFRWEB is BaseSlot{
                 }
                 }
 
-                //TODO maybe not multiply by 3 in the type but do it on game.
+
                 if (0 < freespinCount) {
                 
                     winRate = winRate * multiplier;
                     freespinCount --;
                 }
-                
                 
                 
                 ///////Starts Bonus calculation
@@ -148,17 +144,108 @@ contract WithRFRWEB is BaseSlot{
                         }
                 }
                 ///////////////
-
-               if (3 == bonusCount) {
-                    return (bet * winRate, bonusFreespins);
+                
+                retvals = new uint256[](3);
+                retvals[0] = bet * winRate;
+                if (3 == bonusCount) {
+                    retvals[1] = bonusFreespins;
                 }
                 else {
-                    return (bet * winRate, freespinCount);
+                    retvals[1] = freespinCount;
                 }
+                
+                retvals[2] = bonusCount;
+                 
+                return(retvals);
         }
         
+        function mergeRands(
+                uint256[] memory state,
+                uint256[] memory action,
+                uint256[] memory rand1,
+                uint256[] memory rand2)
+                public
+                view
+                returns (uint256[] memory rand) {
+                   
+                    if (1 == action[1]) {
+                        
+                        if(0 != state.length && state[7] > 0) {
+                            return mergeFreespinRands(rand1, rand2);
+                        }
+                        else {
+                            return mergeSpinRands(rand1, rand2);
+                        }
+                        
+                    }
+                    else if (2 == action[1]) {
+                        return mergeDoublingRands(rand1, rand2);
+                    }
+                    require(false, "Error: Wrong game type");
+                }
         
+        function mergeFreespinRands(uint256[] memory rand1, uint256[] memory rand2) 
+                                                        public
+                                                        view
+                                                        returns (uint256[] memory) {
+
+                require(rand1.length == rand2.length, 'Error: rand2 length is not correct');
+                require(rand1.length == getRandLength(1) + 1, 'Error: rand1 length is not correct'); 
+                uint256[] memory rand = new uint256[](rand1.length - 1);
+                for (uint256 i = 0; i < rand1.length - 2; i++) {
+                        rand[i] = (rand1[i] + rand2[i]) % reelsFreespin[i].length;
+                }
+                rand[rand.length - 1] = (rand1[rand.length - 1] + rand2[rand.length - 1]) % reelsFreespin.length; //The last element is to choose column for extending
+
+                return rand;
+        }
         
+        function getRandBoundaries(uint256[] calldata state, uint256[] calldata action)
+                external
+                view
+                returns (uint256[] memory randBoundaries) {
+
+                   
+                    if (1 == action[1]) {
+                        
+                        if(0 != state.length && state[7] > 0) {
+                            
+                            randBoundaries = new uint256[](reelsFreespin.length + 1);
+                        
+                            for (uint256 i = 0; i < reelsFreespin.length; i++) {
+                            
+                                randBoundaries[i] = reelsFreespin[i].length;
+                            
+                            }
+                            
+                            randBoundaries[reelsFreespin.length] = reelsFreespin.length; //The last element is to choose column for extending
+                        }
+                        else {
+                            
+                            randBoundaries = new uint256[](reels.length);
+                        
+                            for (uint256 i = 0; i < reels.length; i++) {
+                            
+                                randBoundaries[i] = reels[i].length;
+                            
+                            }
+                            
+                        }
+                            
+                    }
+                    else if (2 == action[1]) {
+                        
+                        randBoundaries = new uint256[](1);
+                        randBoundaries[0] = 2;
+          
+                    }
+                    else {
+                        require(false, "Error: Wrong game type");
+                    }
+                    
+                    return randBoundaries;
+                }
+                
         function getFreespinImage(uint256[] memory _rand)
                                         internal
                                         view

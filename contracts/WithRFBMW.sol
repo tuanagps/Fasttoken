@@ -8,17 +8,17 @@ import './BaseSlot.sol';
 /**
  * @title All slots that have the following features can be derived from this class
  * Reeled Freespins - On win game might enter freespin mode where it doesnt pay for spins, with different reels for freespin 
- * WildCards Expanding - wildcard symbols that replace other symbols with the given ruls can expand across multiple lines
+ * WildCards - wildcard symbols that replace other symbols with the given ruls 
  * Bouns - symbol for entering bonus game
+ * Multipliers - returns a multiplier for the next game.
  */
-contract WithRFWEB is BaseSlot{
+contract WithRFBMW is BaseSlot{
 
 
         uint256 public bonusSymbol;
         uint256 public wildCard;
         uint256[][] public reelsFreespin;
-        uint256 public multiplier;
-        uint256 public bonusFreespins;
+        uint256[][] public reelsBonus;
         
         /**
          * @notice Gets win for given spin
@@ -28,7 +28,7 @@ contract WithRFWEB is BaseSlot{
          * @param line Line Count of the bet
          * @param rand Spin's random values'
          * @param freespinCount Number of current freespins.
-         * @return Win and Number of free spins
+         * @return Win and Number of free spins and multiplier
          * 
          */
         function getSpinResult(uint256 bet, uint256 line, uint256[] memory rand, uint256 freespinCount) 
@@ -52,6 +52,7 @@ contract WithRFWEB is BaseSlot{
                 require(0 != reels.length, 'Error: Uninitialized reels');
                 require(0 != lines.length, 'Error: Uninitialized lines');
                 require(0 != reelsFreespin.length, 'Error: Uninitialized free spins');
+                require(0 != reelsBonus.length, 'Error: Uninitialized bonuses');
                // require(rand.length == reels.length, 'Error: Rand array length should be the same as reels length');
                 require(line <= linesLocal.length, 'Error: line value is bigger than existing lines count');
                 
@@ -64,18 +65,6 @@ contract WithRFWEB is BaseSlot{
                     
                     image = getFreespinImage(rand);
                     
-                    //Extending Wild Cards
-                for (uint256 i = 0; i < image.length; i++) { 
-                        for (uint256 j = 0; j < imageSize; j++) {
-                                if (wildCard == image[i][j]) {
-                                    for (uint256 jj = 0; jj < imageSize; jj++) { 
-                                        if(bonusSymbol != image[i][jj])
-                                        image[i][jj] = wildCard;
-                                    }
-                                        
-                                }
-                        }
-                }
                 }
                 
                 
@@ -98,7 +87,6 @@ contract WithRFWEB is BaseSlot{
                         wcInOrder = j;
                         require(s - 1 < wins.length, 'Error: Current symbol is out of wins borders');
 
-                       
                         j++;
                         while (j <= n) {
 
@@ -134,7 +122,6 @@ contract WithRFWEB is BaseSlot{
 
                 if (0 < freespinCount) {
                 
-                    winRate = winRate * multiplier;
                     freespinCount --;
                 }
                 
@@ -154,19 +141,37 @@ contract WithRFWEB is BaseSlot{
                 retvals = new uint256[](3);
                 
                 retvals[0] = bet * winRate;
-
-                if (3 == bonusCount) {
-                   retvals[1] = bonusFreespins;
-          
+                retvals[1] = freespinCount;
+                if(3 == bonusCount) {
+                    retvals[2] = bonusCount;
                 }
                 else {
-                    retvals[1] = freespinCount;
+                    retvals[2] = 0;
                 }
-                
-                retvals[2] = bonusCount;
                 
                 return retvals;
         }
+        
+         /**
+         * @notice Gets win for given spin
+         * @dev This order of arguments saves from stack too deep problem.
+         *
+         * @param rand Spin's random values'
+         * @return Win if any Number of free spins and multipliers
+         * 
+         */
+        function getBonusGameResult(uint256 , uint256[] memory rand) 
+                public
+                view
+                returns (uint256[] memory retvals) {
+                    
+                    retvals = new uint256[](3);
+                    retvals[0] = 0;
+                    retvals[1] = reelsBonus[0][rand[0]];
+                    retvals[2] = reelsBonus[1][rand[0]];
+                    
+                   return retvals; 
+                }
         
          function mergeRands(
                 uint256[] memory state,
@@ -190,6 +195,10 @@ contract WithRFWEB is BaseSlot{
                     else if (2 == action[1]) {
                         return mergeDoublingRands(rand1, rand2);
                     }
+                    else if (3 == action[1]) {
+                        return mergeBonusRands(rand1, rand2);
+                    }
+                    
                     require(false, "Error: Wrong game type");
                 }
         
@@ -206,6 +215,34 @@ contract WithRFWEB is BaseSlot{
                 }
                
 
+                return rand;
+        }
+        
+         function getRandLength(uint256 stepType)
+                internal
+                view
+                returns (uint256 randLength) {
+                    if(3 == stepType) {
+                        return 2;
+                    }
+                    else if(2 == stepType || 1 == stepType) {
+                        return super.getRandLength(stepType);
+                    }
+                    require(false, "Error: Wrong game type");
+                }
+                
+        function mergeBonusRands(uint256[] memory rand1, uint256[] memory rand2) 
+                                                        public
+                                                        view
+                                                        returns (uint256[] memory) {
+
+                require(rand1.length == rand2.length, 'Error: rand2 length is not correct');
+                require(rand1.length == getRandLength(3), 'Error: rand1 length is not correct'); 
+                uint256[] memory rand = new uint256[](rand1.length - 1);
+                for (uint256 i = 0; i < rand1.length - 1; i++) {
+                        rand[i] = (rand1[i] + rand2[i]) % reelsBonus[0].length;
+                }
+               
                 return rand;
         }
         
@@ -245,6 +282,12 @@ contract WithRFWEB is BaseSlot{
                         
                         randBoundaries = new uint256[](1);
                         randBoundaries[0] = 2;
+          
+                    }
+                    else if (3 == action[1]) {
+                        
+                        randBoundaries = new uint256[](1);
+                        randBoundaries[0] = reelsBonus[0].length;
           
                     }
                     else {
@@ -322,5 +365,14 @@ contract WithRFWEB is BaseSlot{
                                 returns (uint256) {
 
                 return reelsFreespin.length;
+        }
+        
+        
+        function getBonusArrays()
+                        public
+                        view
+                        returns (uint256[] memory, uint256[] memory ) {
+                            
+                return (reelsBonus[0], reelsBonus[1]);
         }
 }

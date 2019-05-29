@@ -20,6 +20,7 @@ contract FashionClub is ClassicSlot, WithRFWEB {
         /// @notice Constructor
         constructor() public {
 
+                gameName = "FashionClub";
                 bonusSymbol = 12;
                 wildCard = 1;
                 imageSize = 3;

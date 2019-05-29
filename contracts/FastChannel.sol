@@ -25,14 +25,15 @@ import './BaseGame.sol';
 contract FastChannel is Channel {
     
         using SafeMath for uint256;
-           
+        
+        uint16 public constant VERSION = 1;   
         address public signerAddr;
         int256 public lastBalanceChange; 
         uint256 private constant FRZ_HRS = 2 hours; //Default is 2 hours, overwrite for new channel types
-        uint256 public timeOfWithdrawReq;
+        uint256 public timeOfWithdrawReq; 
         uint256 public frozenWithdrawal;
         uint32 public nonce = 0;
-        GameStates lastState;
+        GameStates public lastState;
 
         struct GameStates {
             
@@ -48,6 +49,21 @@ contract FastChannel is Channel {
                 token = _token;
                 player = _player;
                 casino = Casino(_casino);
+        }
+
+        function getLastState() public
+                                view
+                                returns (address gameAddress,
+                                         uint256[] memory state,
+                                         uint256[] memory rand1,
+                                         uint256[] memory rand2,
+                                         bytes32 rand1Sha) {
+
+                return (lastState.gameAddr,
+                                lastState.state,
+                                lastState.rand1,
+                                lastState.rand2,
+                                lastState.rand1Sha);
         }
         
         //being called by casino contract to instantly withdraw FTN from channel to user
@@ -70,6 +86,16 @@ contract FastChannel is Channel {
                 signerAddr = signer;
         }
         
+        /**
+        * @notice Does a user step
+        * Does onchain step as a user. Could be a simple move on any game as long as games
+        * nonce is up to date, triggers a balance change, game state change, and nonces change.
+        * 
+        * @param gameAddr address of the game doing action over
+        * @param action is the new action to be performed over current gmae state
+        * @param rand1 is the players rundom number provided in plain text, depending on the move could be empty
+        * @param rand1Sha is the players rundom number hashed, depending on the move could be empty
+        */
         function userStep(
                 address gameAddr,
                 uint256[] memory action,
@@ -113,6 +139,15 @@ contract FastChannel is Channel {
                 }
         }
         
+         /**
+        * @notice Does a server step
+        * Does onchain step as a server. Could be a simple move on any game as long as games
+        * nonce is up to date, triggers a balance change, game state change, and nonces change.
+        * 
+        * @param gameAddr address of the game doing action over
+        * @param action is the new action to be performed over current gmae state
+        * @param rand2 is the servers rundom number provided in plain text
+        */
         function serverStep(
                 address gameAddr,
                 uint256[] memory action,

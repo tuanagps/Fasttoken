@@ -1,6 +1,7 @@
 
 var argv = require('minimist')(process.argv.slice(2));
 var slot = require('./slot.js');
+var ogwil = require('./ogwil.js');
 
 var truffle = require('../truffle.js');
 const Web3 = require('web3');
@@ -22,6 +23,7 @@ async function start(argv) {
         }
         unlockAccount(argv.network);
         slot.init(argv.network);
+        ogwil.init(argv.network);
 }
 
 start(argv);

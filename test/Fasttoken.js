@@ -20,17 +20,17 @@ contract('Fasttoken', async (accounts) => {
         describe("Token Basic Properties", async function () {
 
                 it("Name - " + TOKEN_NAME, async function () {
-                        let t = await FTN.NAME.call({from:accounts[0]});
+                        let t = await FTN.name.call({from:accounts[0]});
                         assert.equal(t, TOKEN_NAME);
                 });
 
                 it("Symbol - " + TOKEN_SYMBOL, async function () {
-                        let t = await FTN.SYMBOL.call({from:accounts[0]});
+                        let t = await FTN.symbol.call({from:accounts[0]});
                         assert.equal(t, TOKEN_SYMBOL);
                 });
 
                 it("Decimals - " + TOKEN_DECIMALS, async function () {
-                        let t = await FTN.DECIMALS.call({from:accounts[0]});
+                        let t = await FTN.decimals.call({from:accounts[0]});
                         assert.equal(t, TOKEN_DECIMALS);
                 });
 

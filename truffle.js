@@ -14,6 +14,9 @@ module.exports = {
                 localDev: {
                         host: "127.0.0.1",
                         port: 8545,
+                        from: '0xEd79b1F69fB60a0FA2262ccd3F7D5FEb659016b7',
+                        gas: "6000000",
+                        gasPrice: "100000000000",
                         network_id: "*" // Match any network id
                 },
                 ropsten: {
@@ -26,8 +29,8 @@ module.exports = {
                         host: "",
                         port: 8547,
                         from: "0xEd79b1F69fB60a0FA2262ccd3F7D5FEb659016b7",
-                        gas: "6000000",
-                        gasPrice: "100000000000",
+                        gas: "6500000",
+                        gasPrice: "30000000000",
                         network_id: 4
                 },
                 main: {
@@ -41,5 +44,8 @@ module.exports = {
                         enabled: true,
                         runs: 200
                 }
-        }
+        },
+        mocha: {
+                enableTimeouts: false
+       }
 };

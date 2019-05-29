@@ -5,9 +5,11 @@ import './BaseSlot.sol';
 
 
 /**
- * @title All classic slots like this can be derived from here
+ * @title All slots that have the following features can be derived from this class
+ * Doubling - can enter the doubling game on win 
+ * Scats - there are scat symbols in game
  */
-contract WithDS is BaseSlot {
+contract WithDS is BaseSlot { 
 
 
         uint256 public scatSymbol;
@@ -25,7 +27,7 @@ contract WithDS is BaseSlot {
         function getSpinResult(uint256 bet, uint256 line, uint256[] memory rand, uint256) 
                 public
                 view
-                returns (uint256, uint256) {
+                returns (uint256[] memory retvals) {
 
                 uint256 winRate = 0; // Rate to be calculated
                 uint256 i = 0;
@@ -41,7 +43,7 @@ contract WithDS is BaseSlot {
                 
                 require(0 != wins.length, 'Error: Uninitialized spins');
                 require(0 != reels.length, 'Error: Uninitialized reels');
-                require(0 != line, 'Error: Uninitialized lines');
+                require(0 != lines.length, 'Error: Uninitialized lines');
                // require(rand.length == reels.length, 'Error: Rand array length should be the same as reels length');
                 require(line <= linesLocal.length, 'Error: line value is bigger than existing lines count');
                 
@@ -95,8 +97,12 @@ contract WithDS is BaseSlot {
                 }
                 }
                 ///////////////
+                
+                retvals = new uint256[](2);
+                retvals[0] = bet * winRate;
+                retvals[1] = 0;
 
-                return (bet * winRate, 0); //passing 0 as has no freespins for this type of slot
+                return (retvals);
         }
         
         /**

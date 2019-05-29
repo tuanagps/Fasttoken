@@ -198,7 +198,7 @@ contract('Distribution', async (accounts) => {
                 startTime = now + timeOffset;
 
                 distribution = await Distribution.new(startTime, { from:accounts[0] });
-                let fa = await distribution.fst({ from:accounts[0] });
+                let fa = await distribution.ftn({ from:accounts[0] });
                 fasttoken = await Fasttoken.at(fa);
                 contractStartTime = await distribution.startTime({ from:accounts[0] });
                 totalSupply = await distribution.INITIAL_SUPPLY({ from:accounts[0] });

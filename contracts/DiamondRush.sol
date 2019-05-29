@@ -20,6 +20,7 @@ contract DiamondRush is ClassicSlot, WithWDS {
         /// @notice Constructor
         constructor() public {
 
+                gameName = "DiamondRush";
                 scatSymbol = 11;
                 wildCard = 1;
                 imageSize = 3;
