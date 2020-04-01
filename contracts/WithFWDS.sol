@@ -7,12 +7,13 @@ import './BaseSlot.sol';
 
 /**
  * @title All slots that have the following features can be derived from this class
+ *
  * Freespins - On win game might enter freespin mode where it doesnt pay for spins 
  * WildCards - wildcard symbols that replace other symbols with the given ruls
  * Doubling - can enter the doubling game on win 
  * Scats - there are scat symbols in game
  */
-contract WithFWDS is BaseSlot{
+contract WithFWDS is BaseSlot {
 
 
         uint256 public scatSymbol;
@@ -42,7 +43,7 @@ contract WithFWDS is BaseSlot{
                 uint256 currentS;
 
                 uint256[][] memory linesLocal = new  uint256[][](line);
-                for(i = 0; i<line; i++) {
+                for(i = 0; i < line; i++) {
                     linesLocal[i] = lines[i];
                 }
                 

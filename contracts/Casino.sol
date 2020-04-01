@@ -1,13 +1,11 @@
- 
 pragma solidity ^0.5.0;
 
-
 /// openzeppelin imports
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
-import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/ownership/Ownable.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import './Channel.sol';
-import './FastChannelCreator.sol';
+import './FastChannelV2Creator.sol';
 import './Fasttoken.sol';
 
 
@@ -41,9 +39,9 @@ contract Casino is Ownable {
 
         event ChannelCreated(address userAddress, address indexed newChannelAddress);
         
-        event UserRequestedWithdrawal(address indexed chanalAddr, address player, uint256 amount);
-        event UserUpdatedState(address gameAddr, address indexed chanalAddr, int256 balanceChange, uint32 nonce);
-        event ServerUpdatedState(address gameAddr, address indexed chanalAddr, int256 balanceChange, uint32 nonce);
+        event UserRequestedWithdrawal(address indexed channelAddr, address player, uint256 amount);
+        event UserUpdatedState(address gameAddr, address indexed channelAddr, int256 balanceChange, uint32 nonce);
+        event ServerUpdatedState(address gameAddr, address indexed channelAddr, int256 balanceChange, uint32 nonce);
         event FabricChanged(address from, address to);
 
         /**
@@ -55,7 +53,7 @@ contract Casino is Ownable {
 
                 token = Fasttoken(_token);
                 signerAddr = msg.sender;
-                currentChannelCreator = address(new FastChannelCreator());
+                currentChannelCreator = address(new FastChannelV2Creator());
         }
 
         /**
@@ -65,11 +63,27 @@ contract Casino is Ownable {
          */
         function createChannel() external notLocked {
 
-                require(address(userToChannel[msg.sender]) == address(0x0), 'Error: Channel with that address already exists'); //One address one channel.
-                Channel f = Channel(FastChannelCreator(currentChannelCreator).createNew(address(this), msg.sender, token));
+                //One address one channel.
+                require(address(userToChannel[msg.sender]) == address(0x0), 'Error: Channel with that address already exists');
+                Channel f = Channel(FastChannelV2Creator(currentChannelCreator).createNew(address(this), msg.sender, token));
                 userToChannel[msg.sender] = f;
                 channels.push(address(f));
                 emit ChannelCreated(msg.sender, address(f));
+        }
+        
+        /**
+         * @notice Changes channel owner/player only after player requested it on mutual agreement
+         */
+        function changeChannelPlayer(address channelAddress, address newPlayerAddress) external onlyOwner {
+            
+            require(address(userToChannel[newPlayerAddress]) == address(0x0), 'Error: Channel with that address already exists'); //One address one channel.
+            require(isValidChannel(channelAddress),'Error: Invalid Channel');
+            require(FastChannelV2(channelAddress).pendingPlayer() == newPlayerAddress, 'Error: new Player addresses wont match');
+            delete userToChannel[FastChannelV2(channelAddress).player()];
+            FastChannelV2 ft = FastChannelV2(channelAddress);
+            ft.approvePlayerChange(newPlayerAddress);
+            userToChannel[newPlayerAddress] = Channel(channelAddress);
+            
         }
 
         /**
@@ -80,7 +94,6 @@ contract Casino is Ownable {
         function withdrawCasinoBank(uint256 amount) external onlyOwner {
                             
                 require(casinoAllowedToWithdraw(amount), 'Error: Casino not allowed to withdraw that amount');
-
                 lastWithdraw = now;
                 token.transfer(owner(), amount);
         }
@@ -95,7 +108,7 @@ contract Casino is Ownable {
                                 external
                                 onlyOwner {
                 
-                FastChannel ft = FastChannel(channelAddress);
+                FastChannelV2 ft = FastChannelV2(channelAddress);
                 ft.withdrawInstantly(amount);
         }
         
@@ -129,17 +142,13 @@ contract Casino is Ownable {
          * @notice Locks FastChannel, during lock period some operations
          * like creating new channels is forbidden.
          */
-        function lock()
-                        external
-                        onlyOwner {
+        function lock() external onlyOwner {
 
                 isLocked = true;
         }
 
         /// @notice Unlocks FastChannel.
-        function unlock()
-                        external
-                        onlyOwner {
+        function unlock() external onlyOwner {
 
                 isLocked = false;
         }
@@ -253,7 +262,7 @@ contract Casino is Ownable {
                                 view
                                 returns (bool) {
 
-                return address(userToChannel[FastChannel(a).player()]) == a;
+                return address(userToChannel[FastChannelV2(a).player()]) == a;
         }
       
         /// @dev Throws if FastChannel is locked

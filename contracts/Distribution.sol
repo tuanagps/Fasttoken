@@ -2,9 +2,9 @@
 pragma solidity ^0.5.0;
 
 /// Openzeppelin imports
-import 'openzeppelin-solidity/contracts/token/ERC20/ERC20.sol';
-import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
-import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/ownership/Ownable.sol';
 
 /// Fasttoken imports
 import './Fasttoken.sol';
@@ -81,7 +81,7 @@ contract Distribution is Ownable {
          */
         constructor(uint256 s) public {
 
-                require(s >= now);
+                require(s >= now, 'Error: time must be greater then current time');
                 require(
                         availableTotalSupply == availableFounderSupply.
                                 add(availableAdvisorsSupply).
@@ -89,7 +89,8 @@ contract Distribution is Ownable {
                                 add(availableSaleSupply).
                                 add(availablePlayersDistributionSupply).
                                 add(availableMarketingSupply).
-                                add(availableBankrollSupply)
+                                add(availableBankrollSupply),
+                        'Error: Incorrect distribution supplies'
                 );
                 startTime = s;
                 ftn = new Fasttoken(address(this));
@@ -107,9 +108,9 @@ contract Distribution is Ownable {
                 public
                 onlyOwner {
 
-                require(0 == allocations[r].totalAllocated && 0 < t);
-                require(AllocationType.Founder <= s && AllocationType.Marketing >= s);
-                require(address(0) != r);
+                require(0 == allocations[r].totalAllocated && 0 < t, 'Error: Incorrect allocation amount');
+                require(AllocationType.Founder <= s && AllocationType.Marketing >= s, 'Error: Incorrect allocation type');
+                require(address(0) != r, 'Error: Invalid recipient address');
 
                 if (AllocationType.Founder == s) {
                         availableFounderSupply = availableFounderSupply.sub(t);
@@ -191,10 +192,10 @@ contract Distribution is Ownable {
          *
          */
         function transferTokens (address r) public {
-                
-                require(allocations[r].amountClaimed < allocations[r].totalAllocated);
-                require(now >= allocations[r].endCliff);
-                require(now >= startTime);
+
+                require(allocations[r].amountClaimed < allocations[r].totalAllocated, 'Error: Amount already claimed');
+                require(now >= allocations[r].endCliff, 'Error: Incorrect cliff period');
+                require(now >= startTime, 'Error: Incorrect start time');
                 uint256 newAmountClaimed;
                 if (allocations[r].endVesting > now) {
                         // Transfer available amount based on vesting schedule and allocation
@@ -204,7 +205,7 @@ contract Distribution is Ownable {
                         newAmountClaimed = allocations[r].totalAllocated;
                 }
                 uint256 tokensToTransfer = newAmountClaimed.sub(allocations[r].amountClaimed);
-                require(ftn.transfer(r, tokensToTransfer));
+                require(ftn.transfer(r, tokensToTransfer), 'Error: Error during token transfer');
                 allocations[r].amountClaimed = newAmountClaimed;
                 grandTotalClaimed = grandTotalClaimed.add(tokensToTransfer);
                 emit TokenClaimed(
@@ -230,9 +231,9 @@ contract Distribution is Ownable {
                                 public
                                 onlyOwner {
 
-                require(t != address(ftn));
+                require(t != address(ftn), 'Error: Incorrect token address');
                 ERC20 token = ERC20(t);
                 uint256 balance = token.balanceOf(address(this));
-                require(token.transfer(r, balance));
+                require(token.transfer(r, balance), 'Error: Error during token transfer');
         }
 }

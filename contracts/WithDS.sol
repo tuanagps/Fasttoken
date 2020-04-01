@@ -37,7 +37,7 @@ contract WithDS is BaseSlot {
                 uint256 currentS;
 
                 uint256[][] memory linesLocal = new  uint256[][](line);
-                for(i = 0; i<line; i++) {
+                for(i = 0; i < line; i++) {
                     linesLocal[i] = lines[i];
                 }
                 

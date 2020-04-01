@@ -11,23 +11,21 @@ import './WithWDS.sol';
  */
 contract DiamondRush is ClassicSlot, WithWDS {
 
-
         uint256 public constant REELS_COUNT = 5;
         uint256 public constant WINS_COUNT = 12;
         uint256 public constant LINES_COUNT = 5;
-        
-        
+
         /// @notice Constructor
         constructor() public {
 
-                gameName = "DiamondRush";
+                gameName = 'DiamondRush';
                 scatSymbol = 11;
                 wildCard = 1;
                 imageSize = 3;
         }
 
         function addLine(uint256[] memory lineArray) public {
-            
+
                 require(lines.length < LINES_COUNT, 'Error:Too many lines on initialization');
                 lines.push(lineArray);
         }
@@ -43,6 +41,4 @@ contract DiamondRush is ClassicSlot, WithWDS {
                 require(reels.length < REELS_COUNT,  'Error:Too many reels on initialization');
                 reels.push(reelArray);
         }
-        
 }
-

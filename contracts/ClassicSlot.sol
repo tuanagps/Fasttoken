@@ -1,4 +1,3 @@
-
 pragma solidity ^0.5.0;
 
 
@@ -9,7 +8,6 @@ import './BaseSlot.sol';
  * @title All classic slots like this can be derived from here
  */
 contract ClassicSlot is BaseSlot {
-        
 
         /**
          * @notice Gets win for given spin
@@ -20,24 +18,27 @@ contract ClassicSlot is BaseSlot {
          * @param rand Spin's random values'
          * @param freespinCount Number of current freespins.
          * @return Win and Number of free spins
-         * 
+         *
          */
-        function getSpinResult(uint256 bet, uint256 line, uint256[] memory rand, uint256 freespinCount) 
+        function getSpinResult(
+                uint256 bet,
+                uint256 line,
+                uint256[] memory rand,
+                uint256 freespinCount)
                 public
                 view
                 returns (uint256[] memory);
 
-               
         /**
          * @notice Gets doubling win for given choice
          *
          * @param choice user's choice 1/2 and 0 if undecided
          * @param lastWin amount to double
          * @param rand Doubling's random values'
-         * @return Win 
-         * 
+         * @return Win
+         *
          */
-        function getDoublingResult(uint256 choice, uint256 lastWin, uint256 rand) 
+        function getDoublingResult(uint256 choice, uint256 lastWin, uint256 rand)
                 public
                 pure
                 returns (uint256);
@@ -70,15 +71,15 @@ contract ClassicSlot is BaseSlot {
                 uint256[] memory state,
                 uint256[] memory action,
                 uint256[] memory rand1,
-                uint256[] memory rand2) 
+                uint256[] memory rand2)
                 public
                 view
-                returns (int256, uint256[] memory) { 
-                
-                if(0 == state.length) {
-                    state = new uint256[](8);
+                returns (int256, uint256[] memory) {
+
+                if (0 == state.length) {
+                        state = new uint256[](8);
                 }
-                
+
                 require (4 > state[0], 'Error: state[0] invalid value');
                 require (3 > state[1], 'Error: state[1] invalid value');
                 require (3 > state[4], 'Error: state[4] invalid value');
@@ -105,36 +106,31 @@ contract ClassicSlot is BaseSlot {
                                 rand2);
                 }
                 assert(false);
-                
         }
 
         /// Helper member functions
-
-        function startAction(uint256[] memory state, uint256[] memory action) 
+        function startAction(uint256[] memory state, uint256[] memory action)
                 private
                 pure
-                returns (int256, uint256[] memory) { 
-                
+                returns (int256, uint256[] memory) {
 
                 assert(1 == action[0]);
                 require(3 == state[0] || 0 == state[0], 'Error: state[0] had wrong value');
                 int256 balanceChange = 0;
                 if (1 == action[1]) { // spin
-                
-                        
+
                         require(0 != action[2], 'Error: action[2] should not be 0');
                         require(0 != action[3], 'Error: action[3] should not be 0');
                         require(0 == action[4], 'Error: action[4] should be 0');
 
-
-                        if  (0 == state[7]) { 
+                        if (0 == state[7]) {
                                 balanceChange = -int256(action[2] * action[3]);
                                 state[2] = action[2];
                                 state[3] = action[3];
                         }
                         else {
-                            require(action[2] == state[2], 'Error: state[2] should be equal to action[2]');
-                            require(action[3] == state[3], 'Error: state[3] should be equal to action[3]');
+                                require(action[2] == state[2], 'Error: state[2] should be equal to action[2]');
+                                require(action[3] == state[3], 'Error: state[3] should be equal to action[3]');
                         }
                         balanceChange += WIN_MAX; // TODO calculate WIN_MAX properly based on bet
                         state[6] = 0;
@@ -155,13 +151,13 @@ contract ClassicSlot is BaseSlot {
                 state[0] = 1; // Change state to current
                 state[1] = action[1];
 
-                return(balanceChange, state);                            
+                return(balanceChange, state);
         }
 
-        function serverReply(uint256[] memory state, uint256[] memory action) 
+        function serverReply(uint256[] memory state, uint256[] memory action)
                 private
                 pure
-                returns (int256, uint256[] memory) { 
+                returns (int256, uint256[] memory) {
 
                 assert(2 == action[0]);
                 require(1 == state[0], 'Error: state[0] should not be 1');
@@ -187,17 +183,17 @@ contract ClassicSlot is BaseSlot {
                 }
                 state[0] = 2; // Change state to current
 
-                return(balanceChange, state);                            
+                return(balanceChange, state);
         }
 
         function finishAction(
                 uint256[] memory state,
                 uint256[] memory action,
                 uint256[] memory rand1,
-                uint256[] memory rand2) 
+                uint256[] memory rand2)
                 private
                 view
-                returns (int256, uint256[] memory) { 
+                returns (int256, uint256[] memory) {
 
                 assert(3 == action[0]);
                 require(2 == state[0], 'Error: state[0] should be 2');
@@ -205,7 +201,7 @@ contract ClassicSlot is BaseSlot {
                 require(0 == action[2], 'Error: action[2] should be 0');
                 require(0 == action[3], 'Error: action[3] should be 0');
                 require(0 == action[4], 'Error: action[4] should be 0');
-                
+
                 int256 balanceChange = 0;
                 uint256 win = 0;
                 uint256 numberOfFreeSpins = 0;
@@ -214,7 +210,15 @@ contract ClassicSlot is BaseSlot {
                         require(0 != state[3], 'Error: state[3] should not be 0');
                         require(0 == state[4], 'Error: state[4] should be 0');
                         require(0 == state[6], 'Error: state[6] should be 0');
-                        uint256[] memory temp = getSpinResult(state[2], state[3], mergeRands(state, action, rand1, rand2), state[7]);
+                        uint256[] memory temp = getSpinResult(
+                                state[2],
+                                state[3],
+                                mergeRands(
+                                        state,
+                                        action,
+                                        rand1,
+                                        rand2),
+                                state[7]);
                         win = temp[0];
                         numberOfFreeSpins = temp[1];
                         state[7] == numberOfFreeSpins;
@@ -223,15 +227,23 @@ contract ClassicSlot is BaseSlot {
 
                         require(0 != state[4], 'Error: state[4] should not be 0');
                         require(0 != state[6], 'Error: state[6] should not be 0');
-                        win = getDoublingResult(state[4], state[6], (mergeRands(state, action, rand1, rand2))[0]);
+                        win = getDoublingResult(
+                                state[4],
+                                state[6],
+                                mergeRands(
+                                        state,
+                                        action,
+                                        rand1,
+                                        rand2)[0]
+                                );
                 }
                 state[0] = 3; // Change state to current
                 state[1] = 0;
                 state[4] = 0;
                 state[6] = win;
-                
+
                 balanceChange = int256(win);
-                return(balanceChange, state);                            
+                return(balanceChange, state);
         }
 }
 

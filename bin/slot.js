@@ -10,17 +10,17 @@ var transactionOptions = null;
 
 exports.init = async function (network) {
 
-        var host = truffle.networks[network].host;
-        var port = truffle.networks[network].port;
-        var from = truffle.networks[network].from;
-        var gas = truffle.networks[network].gas;
-        var gasPrice = truffle.networks[network].gasPrice;
+        let host = truffle.networks[network].host;
+        let port = truffle.networks[network].port;
+        let from = truffle.networks[network].from;
+        let gas = truffle.networks[network].gas;
+        let gasPrice = truffle.networks[network].gasPrice;
         web3.setProvider(new web3.providers.HttpProvider('http://' + host + ':' + port.toString()));
         transactionOptions = { from: from, gas: gas, gasPrice: gasPrice };
         fs.readdir('slots/', async (err, files) => {
                 asyncForEach(files, async (file) => {
-                        var i = file.lastIndexOf('.');
-                        var ext = (i < 0) ? '' : file.substr(i);
+                        let i = file.lastIndexOf('.');
+                        let ext = (i < 0) ? '' : file.substr(i);
                         if (ext === '.json'/* && file === 'FlamingFruits.json'*/) {
                                 await initSlot(network, file.split('.').slice(0, -1).join('.'));
                         }
@@ -39,20 +39,21 @@ async function initSlot(network, name) {
 
         slot = JSON.parse(fs.readFileSync("./slots/" + name + ".json"));
 
-        var addresses = require('../addresses/' + network + '.json');
-        var dr = getContract(name, addresses[name]);
+        let addresses = require('../addresses/' + network + '.json');
+        let dr = getContract(name, addresses[name]);
 
         await addReels(dr);
         await addFreespinReels(dr);
         await addWins(dr);
         await addLines(dr);
+        await addReelBonus(dr);
         await addToCasino(network, dr, name);
         console.log('---------------------------------------------------------------------------------------');
 }
 
 function getContract(name, address) {
 
-        var abi = JSON.parse(fs.readFileSync("./build/contracts/" + name + ".json")).abi;
+        let abi = JSON.parse(fs.readFileSync("./build/contracts/" + name + ".json")).abi;
         return new web3.eth.Contract(abi, address);
 }
 
@@ -112,6 +113,31 @@ async function addFreespinReels(dr) {
         }
 }
 
+async function addReelBonus(dr) {
+
+        console.log("Adding Bonus Reels ...");
+        let l;
+        try {
+                l = await dr.methods.getBonusArrays().call();
+        } catch (err) {
+                try {
+                        let tr = await dr.methods.addReelBonus(slot.bonus[0], slot.bonus[1]).send(transactionOptions);
+                        console.log('hash - ', tr.transactionHash);
+                        l = await dr.methods.getBonusArrays().call();
+                        console.log('bonus reel -', l[0], l[1]);
+                } catch (err) {
+                        console.log("There is no Bonuses ...");
+                }
+                return;
+        }
+        if (JSON.stringify(l[0].map(i => parseInt(i, 10))) === JSON.stringify(slot.bonus[0])
+                        && JSON.stringify(l[1].map(i => parseInt(i, 10))) === JSON.stringify(slot.bonus[1])) {
+                console.log('Nothing to be added');
+        } else {
+                throw new Error('Bonus Reel is invalid in contract - ' + dr._address);
+        }
+}
+
 async function addWins(dr) {
 
         console.log("Adding Wins ...");
@@ -167,8 +193,8 @@ async function addLines(dr) {
 async function addToCasino(network, dr, name) {
 
         console.log("Adding to Casino ...");
-        var addresses = require('../addresses/' + network + '.json');
-        var cs = getContract('Casino', addresses.Casino);
+        let addresses = require('../addresses/' + network + '.json');
+        let cs = getContract('Casino', addresses.Casino);
         if (0 == await cs.methods.gameAvailable(addresses[name]).call()) {
                 let tr = await cs.methods.addGame(addresses[name]).send(transactionOptions);
                 console.log('hash - ', tr.transactionHash);

@@ -4,7 +4,6 @@ var Web3 = require('web3');
 var truffle = require('../truffle.js');
 var web3 = new Web3();
 
-var slot = null;
 var transactionOptions = null;
 
 
@@ -19,8 +18,10 @@ exports.init = async function (network) {
         transactionOptions = { from: from, gas: gas, gasPrice: gasPrice };
 
         let addresses = require('../addresses/' + network + '.json');
-        let name = 'Ogwil';
+        let name = 'HiLo';
         let dr = getContract(name, addresses[name]);
+        hilo = JSON.parse(fs.readFileSync("./hilo/" + name + ".json"));
+        await addWin(dr);
 
         await addToCasino(network, dr, name);
         console.log('---------------------------------------------------------------------------------------');
@@ -30,6 +31,29 @@ function getContract(name, address) {
 
         let abi = JSON.parse(fs.readFileSync("./build/contracts/" + name + ".json")).abi;
         return new web3.eth.Contract(abi, address);
+}
+
+async function addWin(dr) {
+
+        console.log("Adding Wins ...");
+
+        let l = await dr.methods.getWinArrays().call();
+        l[0] = Object.values(l[0]);
+        l[1] = Object.values(l[1]);
+        if (0 === l[0].length) {
+                let tr = await dr.methods.addWin(hilo.wins[0]).send(transactionOptions);
+                console.log('hash - ', tr.transactionHash);
+                console.log('win 0 - ', hilo.wins[0]);
+                tr = await dr.methods.addWin(hilo.wins[1]).send(transactionOptions);
+                console.log('hash - ', tr.transactionHash);
+                console.log('win 1 - ', hilo.wins[1]);
+        } else if (0 === l[1].length) {
+                tr = await dr.methods.addWin(hilo.wins[1]).send(transactionOptions);
+                console.log('hash - ', tr.transactionHash);
+                console.log('win 1 - ', hilo.wins[1]);
+        } else {
+                console.log('Nothing to be added');
+        }
 }
 
 async function addToCasino(network, dr, name) {

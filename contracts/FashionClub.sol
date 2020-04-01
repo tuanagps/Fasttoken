@@ -15,12 +15,11 @@ contract FashionClub is ClassicSlot, WithRFWEB {
         uint256 public constant REELS_COUNT = 5;
         uint256 public constant WINS_COUNT = 12;
         uint256 public constant LINES_COUNT = 10;
-        
-        
+
         /// @notice Constructor
         constructor() public {
 
-                gameName = "FashionClub";
+                gameName = 'FashionClub';
                 bonusSymbol = 12;
                 wildCard = 1;
                 imageSize = 3;
@@ -29,7 +28,7 @@ contract FashionClub is ClassicSlot, WithRFWEB {
         }
 
         function addLine(uint256[] memory lineArray) public {
-            
+
                 require(lines.length < LINES_COUNT, 'Error:Too many lines on initialization');
                 lines.push(lineArray);
         }
@@ -45,12 +44,11 @@ contract FashionClub is ClassicSlot, WithRFWEB {
                 require(reels.length < REELS_COUNT,  'Error:Too many reels on initialization');
                 reels.push(reelArray);
         }
-        
+
         function addFreespinReel(uint256[] memory reelArray) public {
 
                 require(reelsFreespin.length < REELS_FS_COUNT,  'Error:Too many freespin reels on initialization');
                 reelsFreespin.push(reelArray);
         }
-        
 }
 

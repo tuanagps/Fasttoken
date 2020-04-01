@@ -14,17 +14,19 @@
     "migrate": "truffle migrate",
     "deploy": "node bin/deploy.js",
     "lint": "solium -d contracts/ --fix",
-    "ganache": "ganache-cli"
+    "ganache": "ganache-cli",
+    "gendoc": "solidoc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "openzeppelin-solidity": "2.1.1",
-    "truffle": "^5.0.2",
-    "truffle-assertions": "^0.7.1",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.2",
-    "web3": "^1.0.0-beta.36"
+    "@openzeppelin/contracts": "^2.3.0",
+    "solidoc": "^1.0.5",
+    "truffle": "^5.0.37",
+    "truffle-assertions": "^0.7.2",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.2.1"
   },
   "description": "npm install npm run migrate npm run test",
   "repository": {
@@ -33,8 +35,7 @@
   },
   "devDependencies": {
     "bignumber.js": "^7.2.1",
-    "ethlint": "^1.2.0",
-    "ganache-cli": "^6.1.8",
-    "solidity-docgen": "^0.1.0"
+    "ethlint": "^1.2.5",
+    "ganache-cli": "^6.7.0"
   }
 }
